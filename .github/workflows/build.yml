@@ -1,4 +1,4 @@
-name: Build Kpr Calc (No Logo)
+name: Build Kpr Calc (Fixed Size)
 
 on: [push]
 
@@ -30,7 +30,7 @@ jobs:
           # 1. Create App
           cordova create app com.tajmul.kprcalc "Kpr Calc"
           
-          # 2. Fix Missing Package.json (Fixes your error)
+          # 2. Fix Package.json error
           cd app
           npm init -y
           cd ..
@@ -39,23 +39,21 @@ jobs:
           rm -rf app/www/*
           cp -r website/* app/www/
           
-          # 4. Setup Icon (We use Icon as Splash to hide the Robot)
+          # 4. Setup Icon Only
           mkdir -p app/resources
           cp assets/icon.png app/resources/icon.png
-          cp assets/icon.png app/resources/splash.png
           
           # 5. Enter App Folder
           cd app
           
-          # 6. Generate Resources
-          cordova-res android
+          # 6. Generate ICONS ONLY (This fixes your error)
+          cordova-res android --type icon
           
-          # 7. Add Android Platform
+          # 7. Add Platform
           cordova platform add android
           
-          # 8. NUKE THE SPLASH SCREEN (Edit Config.xml directly)
-          # This sets the splash screen to be hidden and transparent
-          sed -i '/<platform name="android">/a \        <preference name="SplashScreenDelay" value="0" />\n        <preference name="ShowSplashScreen" value="false" />\n        <preference name="FadeSplashScreen" value="false" />\n        <preference name="SplashScreen" value="screen" />\n        <preference name="SplashShowOnlyFirstTime" value="false" />\n        <preference name="BackgroundColor" value="0xff0F0F0F" />' config.xml
+          # 8. Force Hide Splash Screen
+          sed -i '/<platform name="android">/a \        <preference name="SplashScreenDelay" value="0" />\n        <preference name="ShowSplashScreen" value="false" />\n        <preference name="FadeSplashScreen" value="false" />\n        <preference name="BackgroundColor" value="0xff0F0F0F" />' config.xml
           
           # 9. Build
           cordova build android --debug --no-telemetry
@@ -63,6 +61,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kpr-calc-nologo
+          name: kpr-calc-final
           path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
 
