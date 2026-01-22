@@ -1,0 +1,68 @@
+name: Build Kpr Calc (No Logo)
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Tools
+        run: |
+          npm install -g cordova
+          npm install -g cordova-res
+
+      - name: Build APK
+        run: |
+          # 1. Create App
+          cordova create app com.tajmul.kprcalc "Kpr Calc"
+          
+          # 2. Fix Missing Package.json (Fixes your error)
+          cd app
+          npm init -y
+          cd ..
+          
+          # 3. Copy Website
+          rm -rf app/www/*
+          cp -r website/* app/www/
+          
+          # 4. Setup Icon (We use Icon as Splash to hide the Robot)
+          mkdir -p app/resources
+          cp assets/icon.png app/resources/icon.png
+          cp assets/icon.png app/resources/splash.png
+          
+          # 5. Enter App Folder
+          cd app
+          
+          # 6. Generate Resources
+          cordova-res android
+          
+          # 7. Add Android Platform
+          cordova platform add android
+          
+          # 8. NUKE THE SPLASH SCREEN (Edit Config.xml directly)
+          # This sets the splash screen to be hidden and transparent
+          sed -i '/<platform name="android">/a \        <preference name="SplashScreenDelay" value="0" />\n        <preference name="ShowSplashScreen" value="false" />\n        <preference name="FadeSplashScreen" value="false" />\n        <preference name="SplashScreen" value="screen" />\n        <preference name="SplashShowOnlyFirstTime" value="false" />\n        <preference name="BackgroundColor" value="0xff0F0F0F" />' config.xml
+          
+          # 9. Build
+          cordova build android --debug --no-telemetry
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kpr-calc-nologo
+          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+
